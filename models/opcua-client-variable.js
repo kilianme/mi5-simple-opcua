@@ -14,15 +14,17 @@ class OpcuaClientVariable extends EventEmitter {
 
     this.subscribedFromBeginning = subscribe;
 
-    if(client.connected)
-      self.init();
-    else {
-      client.once('connect', function(){
-        self.init();
-      })
-    }
+    // if(client.connected)
+    //   self.init();
+    // else {
+    //   client.once('connect', function(){
+    //     self.init();
+    //   })
+    // }
 
-
+    self.on('initializedMonitoredItem', function(value){
+      self.value = value;
+    });
 
     self.on('change', function(value){
       self.value = value;
@@ -30,7 +32,7 @@ class OpcuaClientVariable extends EventEmitter {
 
   }
 
-  init(){
+  init(callback){
     let self = this;
     if(self.subscribedFromBeginning)
       self.subscribe();
@@ -56,6 +58,8 @@ class OpcuaClientVariable extends EventEmitter {
       this.write(self.initValue);
       self.value = self.initValue;
     }
+
+    this.on('initializedMonitoredItem', callback);
   }
 
   subscribe(){
@@ -65,7 +69,7 @@ class OpcuaClientVariable extends EventEmitter {
     this.monitoredItem = this.client.monitorItem(self.nodeId);
 
     self.monitoredItem.on("initialized",function(){
-      self.emit('subscribed');
+      self.emit("initializedMonitoredItem",self.nodeId);
       self.monitoredItem.on("changed",function(dataValue){
         let value = dataValue.value.value;
         self.emit("change", value);
